@@ -9,18 +9,24 @@ def analyze_statement(stmt) -> dict[str, set[str]]:
     usage: dict[str, set[str]] = defaultdict(set)
     if isinstance(stmt, ast.Select):
         _collect_select(stmt, usage, "R")
+
     elif isinstance(stmt, ast.Insert):
         usage[stmt.table.name].add("C")
-        for row in stmt.values:
-            for expr in row:
-                _collect(expr, usage, "R")
+
+        if stmt.values is not None:
+            for row in stmt.values:
+                for expr in row:
+                    _collect(expr, usage, "C")
+
         if stmt.query is not None:
             _collect_select(stmt.query, usage, "R")
+
     elif isinstance(stmt, ast.Update):
         usage[stmt.table.name].add("U")
         for assignment in stmt.assignments:
-            _collect(assignment.value, usage, "U")
-        _collect(stmt.where, usage, "U")
+            _collect(assignment.value, usage, "R")
+        _collect(stmt.where, usage, "R")
+
     elif isinstance(stmt, ast.Delete):
         usage[stmt.table.name].add("D")
         _collect(stmt.where, usage, "R")
