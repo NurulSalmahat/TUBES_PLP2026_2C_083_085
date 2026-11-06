@@ -120,9 +120,11 @@ class Resolver:
         self._pop()
 
     def _insert(self, ins: ast.Insert) -> None:
-        for row in ins.values:
-            for expr in row:
-                self._expr(expr)
+        if ins.values is not None:
+            for row in ins.values:
+                for expr in row:
+                    self._expr(expr)
+        
         if ins.query is not None:
             self._select(ins.query)
 

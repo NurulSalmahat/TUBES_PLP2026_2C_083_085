@@ -11,6 +11,8 @@ from crud.parser import parse_sql
 from crud.analyzer import analyze_statement
 from crud.resolver import Resolver
 from crud.ast_nodes import iter_nodes, ColumnRef
+from crud.ast_nodes import BinaryOp
+from crud.analyzer import analyze_statement
 
 # ==========================================
 # TEST REGRESI UNTUK BUG YANG DIPERBAIKI
@@ -210,16 +212,123 @@ def test_delete_tidak_membocorkan_scope():
     )
 
 # ==========================================
-# 1. TEST REGRESI UNTUK BUG YANG DIPERBAIKI
+# TEST REGRESI UNTUK BUG YANG DIPERBAIKI
 # ==========================================
-#Menguji bug TO-DO 1 yang sebelumnya gagal di parse
-"""Diperbaiki oleh:** Sahla Fadhilah Rahim"""
+# Diperbaiki oleh: Sahla Fadhilah Rahim
+# 1. Menguji bug TO-DO 1 yang sebelumnya gagal di parse
 def test_regresi_insert_select():
     script = parse_sql("INSERT INTO arsip_pesanan (id, total) SELECT id, total FROM pesanan WHERE tanggal < :batas;")
     assert script.errors == []
     s = script.statements[0]
     assert isinstance(s, ast.Insert)
     assert s.query is not None
+
+# 2. Menguji Presedensi Operator AND Lebih Tinggi daripada OR
+# Alasan: Operator AND harus memiliki tingkat presedensi yang lebih tinggi dibandingkan operator OR dalam ekspresi SQL 
+# sesuai dengan spesifikasi.
+def test_presedensi_and_or():
+    sql = """
+    SELECT * FROM mahasiswa
+    WHERE a = 1 OR b = 2 AND c = 3;
+    """
+
+    hasil = parse_sql(sql)
+
+    assert len(hasil.errors) == 0
+    assert len(hasil.statements) == 1
+
+    kondisi = hasil.statements[0].where
+
+    # Bagian paling luar harus OR
+    assert isinstance(kondisi, BinaryOp)
+    assert kondisi.op == "OR"
+
+    # Bagian kanan OR harus AND
+    assert isinstance(kondisi.right, BinaryOp)
+    assert kondisi.right.op == "AND"
+
+# 3. Menguji Pemulihan Parser Setelah Terjadi Syntax Error
+# Alasan: Ketika terjadi kesalahan sintaks pada suatu statement, parser harus mampu melakukan pemulihan dengan melewati 
+# token hingga menemukan tanda titik koma (;). Hal ini bertujuan agar kesalahan pada satu statement tidak menghentikan 
+# proses parsing statement berikutnya.
+def test_error_recovery():
+    sql = """
+    SELECT FROM mahasiswa;
+    SELECT * FROM dosen;
+    """
+
+    hasil = parse_sql(sql)
+
+    # Statement pertama harus menghasilkan satu error
+    assert len(hasil.errors) == 1
+
+    # Statement kedua tetap berhasil diparse
+    assert len(hasil.statements) == 1
+    assert hasil.statements[0].sources[0].name == "dosen"
+
+# 4. Menguji Parsing LEFT OUTER JOIN
+# Alasan: Parser harus mampu mengenali sintaks LEFT OUTER JOIN sebagai bentuk dari LEFT JOIN. Hal ini bertujuan agar 
+# penggunaan kata kunci OUTER yang bersifat opsional tidak menyebabkan kesalahan parsing pada query SQL yang valid.
+def test_left_outer_join():
+    sql = """
+    SELECT * FROM mahasiswa
+    LEFT OUTER JOIN dosen
+    ON mahasiswa.id_dosen = dosen.id;
+    """
+
+    hasil = parse_sql(sql)
+
+    assert len(hasil.errors) == 0
+    assert len(hasil.statements) == 1
+
+    statement = hasil.statements[0]
+
+    assert len(statement.joins) == 1
+    assert statement.joins[0].kind == "LEFT"
+
+# 5. Menguji Resolusi INSERT INTO ... SELECT
+# Alasan: memastikan resolver dapat menangani statement INSERT yang menggunakan SELECT sebagai sumber data
+def test_insert_select_dapat_diresolusi():
+    sql = """
+    INSERT INTO arsip_pesanan (id, total)
+    SELECT p.id, p.total
+    FROM pesanan p
+    WHERE p.tanggal < :batas;
+    """
+
+    script = parse_sql(sql)
+
+    assert len(script.errors) == 0
+    assert len(script.statements) == 1
+
+    diagnostics = Resolver().resolve_script(script)
+
+    assert not [d for d in diagnostics if d.level == "error"]
+
+# 6. Menguji Analisis CRUD pada INSERT INTO ... SELECT
+# Alasan: Pengujian ini dilakukan untuk memastikan analyzer dapat menentukan operasi CRUD dengan benar pada
+# statement INSERT yang menggunakan SELECT. Tabel tujuan INSERT harus mendapatkan operasi Create (C), sedangkan 
+# tabel yang menjadi sumber data pada query SELECT harus mendapatkan operasi Read (R). Pengujian ini juga 
+# memastikan analyzer tidak mengalami error ketika atribut values bernilai None.
+def test_insert_select_crud():
+    sql = """
+    INSERT INTO arsip_pesanan (id, total)
+    SELECT id, total
+    FROM pesanan;
+    """
+
+    script = parse_sql(sql)
+
+    assert len(script.errors) == 0
+    assert len(script.statements) == 1
+
+    hasil = analyze_statement(script.statements[0])
+
+    assert hasil == {
+        "arsip_pesanan": {"C"},
+        "pesanan": {"R"}
+    }
+    
 # ==========================================
 # 2. LIMA TEST KASUS TEPI (EDGE CASES)
 # ==========================================
