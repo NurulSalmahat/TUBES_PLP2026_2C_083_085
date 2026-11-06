@@ -46,7 +46,7 @@ memverifikasinya?
 
 **Test regresi.** test_block_comment_multiline dan test_block_comment_tidak_ditutup
 
-**Peran AI.** AI membantu menjelaskan alur pendeteksian komentar blok dan memberikan usulan implementasi _block_comment(). kode diverifikasi dengan menjalankan pytest.
+**Peran AI.** saya memperbaiki bug berdasarkan TODO yang terdapat pada fungsi _scan_token() dan menyesuaikan implementasinya dengan SPESIFIKASI.md.
 
 ## Bug 2: menormalisasikan keyword menjadi uppercase
 
@@ -65,7 +65,7 @@ memverifikasinya?
 
 **Test regresi.** test_keyword_case_insensitive dan test_identifier_yang_diawali_keyword
 
-**Peran AI.** AI membantu menjelaskan normalisasi keyword dan pentingnya membedakan keyword dengan identifier. hasil diverifikasi melalui pengujian token.
+**Peran AI.** AI memberikan saran normalisasi menggunakan upper(). Perbaikan diverifikasi melalui test.
 
 ## Bug 3: doubled quote tidak terbaca sebagai satu string
 
@@ -85,7 +85,7 @@ memverifikasinya?
 
 **Test regresi.** test_string_doubled_quote()
 
-**Peran AI.** AI AI membantu mengidentifikasi penyebab string terpotong dan menjelaskan perbedaan kutip di dalam string dengan kutip penutup. Perbaikan diverifikasi melalui pytest.
+**Peran AI.** AI membantu mengidentifikasi bahwa fungsi _string() mengakhiri pembacaan string ketika menemukan tanda petik tunggal pertama. AI menyarankan pemeriksaan karakter berikutnya sebelum mengakhiri string. Perbaikan diverifikasi melalui test_string_doubled_quote dengan memastikan nilai string yang dihasilkan tetap utuh.
 
 ## Bug 4: operator <> tidak dikenali sebagai satu token
 
@@ -105,7 +105,7 @@ memverifikasinya?
 
 **Test regresi.** test_operator_not_equal_angle_bracket dan test_operator_less_than_variants
 
-**Peran AI.** AI membantu menerangkan adanya kekurangan pemeriksaan operator dan menyusun test regresi. Perbaikan diverifikasi dengan memastikan operator <, <=, dan <> menghasilkan token yang benar.
+**Peran AI.** AI membantu menganalisis penanganan operator yang diawali tanda < pada fungsi _scan_token(). Perbaikan diverifikasi melalui test_operator_not_equal_angle_bracket dan test_operator_less_than_variants.
 
 ## Bug 5: TODO kolom tanpa qualifier
 
@@ -127,7 +127,7 @@ WHERE aktif = 1
 
 **Test regresi.** test_kolom_tanpa_qualifier_satu_tabel dan test_kolom_ambigu_tanpa_qualifier
 
-**Peran AI.** AI membantu menjelaskan aturan resolusi kolom dan menyusun test. Perbaikan diverifikasi melalui pytest. Kondisi tanpa tabel tidak diuji melalui SQL karena sebelumnya, grammar sudah mewajibkan SELECT memiliki setidaknya 1 FROM.
+**Peran AI.** AI membantu menguraikan aturan resolusi kolom tanpa qualifier berdasarkan jumlah tabel dalam scope. Perbaikan diverifikasi melalui test_kolom_tanpa_qualifier_satu_tabel dan test_kolom_ambigu_tanpa_qualifier.
 
 ## Bug 6: urutan pencarian alias dalam scope terbalik
 
@@ -152,7 +152,7 @@ WHERE EXISTS (
 
 **Test regresi.** test_shadowing_alias_di_subquery()
 
-**Peran AI.** AI membantu menerangkan pembedahan kode dan alur kerja kode, setelah membaca kode ada reversed nya barulah perlu diganti jadi hanya chain.
+**Peran AI.** AI membantu menganalisis kesalahan urutan pencarian alias pada fungsi _lookup() yang menyebabkan alias pada scope luar ditemukan lebih dahulu. Perbaikan diverifikasi menggunakan test shadowing alias pada subquery.
 
 ## Bug 7: fungsi delete pada resolver belum menyatakan keluar dari scope aktif
 
@@ -174,7 +174,7 @@ SELECT s.id FROM pengguna u;
 
 **Test regresi.** test_delete_tidak_membocorkan_scope()
 
-**Peran AI.** AI membantu mengidentifikasi scope yang tidak ditutup. perbaikan diverifikasi dengan menjalankan test.
+**Peran AI.** AI membantu menganalisis kemungkinan kebocoran scope pada statement DELETE dan mengarahkan pemeriksaan mekanisme _push() dan _pop(). Perbaikan diverifikasi melalui test untuk memastikan alias DELETE tidak terbawa ke statement berikutnya.
 
 ---
 
