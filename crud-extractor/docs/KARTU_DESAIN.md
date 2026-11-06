@@ -12,8 +12,8 @@ alternatif yang ditolak dan alasannya. Contoh topik (boleh memilih yang lain):
 
 | No | Keputusan | Alternatif yang ditolak | Alasan |
 | --- | --- | --- | --- |
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
+| 1 | memisahkan penanganan komentar blok ke dalam fungsi khusus _block_comment() | menuliskan seluruh logika pembacaan komentar blok langsung di dalam _scan_token() | agar setiap fungsi memiliki satu tanggung jawab. jadi _scan_token() hanya fokus mengenali jenis token, sedangkan _block_comment() menangani pembacaan komentar sampai menemukan penutupnya saja. |
+| 2 | melakukan normalisasi keyword menggunakan upper(), tetapi tetap mempertahankan penulisan identifier asli | mengubah seluruh teks yang ditemukan menjadi huruf besar | Keyword SQL harus dikenali tanpa membedakan huruf besar dan kecil, tetapi identifier harus tetap mempertahankan penulisan aslinya. jadi, keyword tidak mengubah nama tabel atau kolom yang sudah di deklarasikan. |
+| 3 | melakukan pencarian alias mulai dari scope yg paling dalam kemudian kembali ke scope parent | melakukan pencarian dari scope paling luar (reversed) | pencarian yg paling dalam memungkinkan alias pada subquery mengesampingkan alias dengan nama yang sama pada query luar. |
 | 4 | | | |
 | 5 | | | |
