@@ -108,7 +108,10 @@ class Lexer:
             return
         if ch == "/" and self._peek() == "*":
             # TODO(T3): dukung komentar blok /* ... */ (SPESIFIKASI.md bagian 2.3).
-            raise LexError("komentar blok belum didukung", line, col)
+            self._advance()  # lewati '*'
+            self._block_comment(line, col)
+            return
+            
         if ch in _SINGLE:
             self._add(_SINGLE[ch], ch, line, col)
             return
@@ -116,7 +119,12 @@ class Lexer:
             self._add(TokenType.OP, ch, line, col)
             return
         if ch == "<":
-            op = "<=" if self._match("=") else "<"
+            if self._match("="):
+                op = "<="
+            elif self._match(">"):
+                op = "<>"
+            else:
+                op = "<"
             self._add(TokenType.OP, op, line, col)
             return
         if ch == ">":
@@ -152,15 +160,31 @@ class Lexer:
 
     def _string(self, line: int, col: int) -> None:
         chars: list[str] = []
-        while True:
-            if self._at_end():
-                raise LexError("string tidak ditutup", line, col)
+        while not self._at_end():
             ch = self._advance()
-            if ch == "'":
-                break
-            chars.append(ch)
-        self._add(TokenType.STRING, "".join(chars), line, col)
 
+            if ch == "'":
+                if self._peek() == "'":
+                    self._advance()  # lewati quote kedua
+                    chars.append("'")
+                else:
+                    self._add(TokenType.STRING, "".join(chars), line, col)
+                    return
+                
+            else:
+                chars.append(ch)
+        raise LexError("string tidak ditutup", line, col)
+
+    def _block_comment(self, line: int, col: int) -> None:
+        while not self._at_end():
+            if self._peek() == "*" and self._peek(1) == "/":
+                self._advance()  # lewati '*'
+                self._advance()  # lewati '/'
+                return
+            
+            self._advance()
+        raise LexError("komentar blok tidak ditutup", line, col)
+        
     def _number(self, line: int, col: int) -> None:
         start = self.pos - 1
         while self._peek().isdigit():
@@ -176,8 +200,9 @@ class Lexer:
         while self._peek().isalnum() or self._peek() == "_":
             self._advance()
         text = self.src[start:self.pos]
-        if text in KEYWORDS:
-            self._add(TokenType.KEYWORD, text, line, col)
+        normalized = text.upper()
+        if normalized in KEYWORDS:
+            self._add(TokenType.KEYWORD, normalized, line, col)
         else:
             self._add(TokenType.IDENT, text, line, col)
 
