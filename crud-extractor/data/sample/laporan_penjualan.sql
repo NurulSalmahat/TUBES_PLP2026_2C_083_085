@@ -3,7 +3,7 @@
 SELECT p.nama, SUM(o.total) AS omzet
 FROM pelanggan p
 JOIN pesanan o ON o.pelanggan_id = p.id
-WHERE o.status = 'LUNAS' AND o.catatan <> 'FROM rahasia'
+WHERE o.status = 'LUNAS' AND o.catatan != 'FROM rahasia'
 GROUP BY p.nama;
 
 INSERT INTO arsip_pesanan (id, total)
