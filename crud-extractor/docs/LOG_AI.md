@@ -33,7 +33,7 @@ Catat setiap penggunaan AI atau coding agent yang memengaruhi kode atau laporan.
 
 | 14 | Nurul Salmahat | bagaimana menentukan tabel asal untuk kolom yang tidak menggunakan qualifier atau nama tabel | Diterima | karena kolom tanpa nama tabel hanya dapat ditentukan secara pasti jika terdapat satu sumber tabel. jika sumbernya lebih dari satu, maka kolom berpotensi ambigu | Menjalankan test_kolom_tanpa_qualifier_satu_tabel dan test_kolom_ambigu_tanpa_qualifier. |
 
-| 16 | Nurul Salmahat | buat test tambahan untuk memvalidasi bug yang sudah diperbaiki | Diterima | agar bug yang sudah diperbaiki itu mempunyai acuan kebenaran | Menjalankan test_tambahan.py |
+| 15 | Nurul Salmahat | buat test tambahan untuk memvalidasi bug yang sudah diperbaiki | Diterima | agar bug yang sudah diperbaiki itu mempunyai acuan kebenaran | Menjalankan test_tambahan.py |
 
 Refleksi (3-5 kalimat)
 AI paling membantu dalam menelusuri penyebab bug, terutama ketika harus memahami hubungan antara parser, resolver, dan analyzer. Selain itu, AI juga membantu dalam memahami kode Lexer dan Resolver, memberikan saran perbaikan, serta menyusun unit test untuk menguji setiap bug yang ditemukan. Namun, AI sempat memberikan saran yang kurang tepat, seperti menggunakan fungsi _collect_expr() yang ternyata tidak tersedia dalam kode dan perlu diganti dengan _collect(). Hasil analisis dan saran AI tidak langsung diterima begitu saja, tetapi diperiksa kembali dengan melihat implementasi program dan menjalankan pengujian menggunakan pytest, CLI, serta AST pada file contoh. Jadi, dapat disimpulkan bahwa AI membantu mempercepat proses pemahaman dan pencarian solusi, tetapi keputusan akhir tetap didasarkan pada pertimbangan dan verifikasi manusia.

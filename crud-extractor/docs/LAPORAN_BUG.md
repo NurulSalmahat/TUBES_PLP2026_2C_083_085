@@ -37,10 +37,11 @@ memverifikasinya?
 
 **Reproduksi minimal.** 
 
-```/* komentar\n   dua baris */ SELECT
+```
+/* komentar\n   dua baris */ SELECT
 ```
 
-**Akar masalah.** fungsi _scan_token() sebelumnya hanya menangani komentar satu baris yang diawali --. penanganan komentar blok masih berupa TODO sehingga lexer tidak memiliki proses untuk membaca isi komentar sampai menemukan penutup */. 
+**Akar masalah.** fungsi _scan_token() sebelumnya hanya menangani komentar satu baris yang diawali --. penanganan komentar blok masih berupa TODO sehingga lexer tidak memiliki proses untuk membaca isi komentar sampai menemukan penutup */.  Konsep ini berkaitan dengan Bab 4 Scanning pada Crafting Interpreters, yang menjelaskan bahwa scanner bertugas membaca karakter sumber program dan mengelompokkannya menjadi token. Komentar merupakan bagian dari teks sumber yang harus dikenali dan dilewati oleh scanner, bukan diteruskan sebagai token untuk tahap parsing. Dengan demikian, lexer perlu membaca seluruh isi komentar sampai menemukan penutupnya.
 
 **Perbaikan.** perlu adanya fungsi baru yang membaca karakter sampai menemukan */. fungsi _scan_token() mendeteksi pembuka /* kemudian memanggil _block_comment() untuk membaca karakter sampai menemukan penutup */. jika komentar tidak ditutup sampai akhir input, fungsi akan menghasilkan LexError.
 
@@ -56,10 +57,11 @@ memverifikasinya?
 
 **Reproduksi minimal.** 
 
-```select id from t
+```
+select id from t
 ```
 
-**Akar masalah.** kode lama pada fungsi _word() itu membandingkan kata secara langsung dengan KEYWORDS. Maka select di test_keyword_huruf_kecil itu tidak cocok dengan SELECT.
+**Akar masalah.** kode lama pada fungsi _word() itu membandingkan kata secara langsung dengan KEYWORDS. Maka select di test_keyword_huruf_kecil itu tidak cocok dengan SELECT. Hal ini berkaitan dengan Bab 4 Scanning, khususnya proses pengenalan token berdasarkan pola karakter yang dibaca. Scanner perlu membedakan keyword dan identifier berdasarkan aturan leksikal yang telah ditentukan. Dalam implementasi ini, normalisasi huruf digunakan untuk mengenali keyword tanpa mengubah teks asli identifier.
 
 **Perbaikan.** Mengubah teks sementara menjadi uppercase menggunakan text.upper() untuk pemeriksaan terhadap KEYWORDS. Jika termasuk keyword, nilai token disimpan dalam uppercase. Jika bukan keyword, teks asli tetap disimpan sebagai IDENT.
 
@@ -79,7 +81,7 @@ memverifikasinya?
 'O''Brien'
 ```
 
-**Akar masalah.** fungsi _string() langsung menganggap setiap kutip tunggal sebagai penutup string tanpa memeriksa apakah terdapat kutip tunggal kedua setelahnya.
+**Akar masalah.** fungsi _string() langsung menganggap setiap kutip tunggal sebagai penutup string tanpa memeriksa apakah terdapat kutip tunggal kedua setelahnya. Konsep ini berkaitan dengan Bab 4 Scanning, yang menjelaskan proses pengenalan literal string oleh scanner. Scanner harus mengetahui batas awal dan akhir suatu string serta menangani karakter khusus yang menjadi bagian dari isi string. Oleh karena itu, tanda petik tunggal berulang perlu diperiksa terlebih dahulu agar tidak keliru dianggap sebagai penutup string.
 
 **Perbaikan.** mengubah _string() agar memeriksa karakter berikutnya ketika menemukan kutip tunggal. Jika karakter berikutnya juga kutip tunggal, kedua kutip dikonsumsi dan satu karakter kutip ditambahkan ke nilai string. Jika tidak, kutip dianggap sebagai penutup string.
 
@@ -99,7 +101,7 @@ memverifikasinya?
 <>
 ```
 
-**Akar masalah.** pemindaian operartor < hanya memeriksa kemungkinan operator <=, jadi tidak memeriksa apakah <> memungkinkan.
+**Akar masalah.** pemindaian operartor < hanya memeriksa kemungkinan operator <=, jadi tidak memeriksa apakah <> memungkinkan. Konsep ini berkaitan dengan maximal munch, yaitu membaca karakter sebanyak mungkin selama masih membentuk token yang valid, sehingga <> dikenali sebagai satu token, bukan dua token terpisah.
 
 **Perbaikan.** penambahan percabangan untuk memeriksa karakter > setelah karakter <. jika ditemukan, keduanya akan disimpan sebagai satu token OP dengan nilai <>.
 
@@ -121,7 +123,7 @@ FROM pelanggan
 WHERE aktif = 1
 ```
 
-**Akar masalah.** fungsi _column() yang hanya menangani kolom dengan qualifier. bagian untuk kolom tanpa qualifier masih berupa TODO, jadi resolver belum menentukan tabel asal kolom.
+**Akar masalah.** fungsi _column() yang hanya menangani kolom dengan qualifier. bagian untuk kolom tanpa qualifier masih berupa TODO, jadi resolver belum menentukan tabel asal kolom. Konsep ini berkaitan dengan Bab 11 Resolving and Binding, yang membahas proses pencarian variabel berdasarkan lingkungan atau scope tempat variabel tersebut berada.
 
 **Perbaikan.** mengambil seluruh entri pada scope terdalam. jika hanya ada satu tabel, col.resolved diisi dengan tabel tersebut. jika lebih dari satu tabel, resolver memberikan warning bahwa kolom itu ambigu tanpa skema/tabel. jika tidak ada tabel acuan, resolver memberikan warning.
 
@@ -146,7 +148,7 @@ WHERE EXISTS (
 );
 ```
 
-**Akar masalah.** penggunaan reversed(chain) menyebabkan urutan pencarian tidak sesuai SPESIFIKASI.md
+**Akar masalah.** penggunaan reversed(chain) menyebabkan urutan pencarian tidak sesuai SPESIFIKASI.md. Pencarian dimulai dari lingkungan terdekat, kemudian dilanjutkan ke lingkungan luar jika nama tidak ditemukan. Prinsip tersebut diterapkan pada resolver agar alias dalam subquery diprioritaskan dibandingkan alias dengan nama yang sama pada query luar. Konsep ini juga berkaitan dengan shadowing.
 
 **Perbaikan.** mengganti iterasi reversed(chain) menjadi chain
 
@@ -168,7 +170,7 @@ DELETE FROM sesi s WHERE s.id = 1;
 SELECT s.id FROM pengguna u;
 ```
 
-**Akar masalah.** fungi delete memanggil push() untuk membuat scope baru, tapi tidak memanggil pop() setelah resolusi selesai. akibatnya, scope delete akan tetap aktif dan alias s akan terlihat oleh statement berikutnya
+**Akar masalah.** fungi delete memanggil push() untuk membuat scope baru, tapi tidak memanggil pop() setelah resolusi selesai. akibatnya, scope delete akan tetap aktif dan alias s akan terlihat oleh statement berikutnya. Konsep ini berkaitan dengan Bab 11 Resolving and Binding, yang menjelaskan bahwa setiap scope memiliki batas lingkungan pencarian tersendiri.
 
 **Perbaikan.** menambahkan pemanggilan _pop() agar scope delete ditutup setelah resolusi selesai
 
@@ -194,7 +196,7 @@ Output yang diharapkan: Statement berhasil di parse menjadi node AST Insert yang
 INSERT INTO arsip (id) SELECT id FROM pesanan WHERE total > 10;
 ```
 
-**Akar masalah.** Fungsi INSERT di crud/parser.py baru mengimplementasikan klausa VALUES dan belum menangani klausa SELECT sehingga menampilkan fungsi ParseError saat mendapatkan token SELECT setelah table (kolom).
+**Akar masalah.** Fungsi INSERT di crud/parser.py baru mengimplementasikan klausa VALUES dan belum menangani klausa SELECT sehingga menampilkan fungsi ParseError saat mendapatkan token SELECT setelah table (kolom). Konsep ini berkaitan dengan Bab 5 dan Bab 6, yang membahas bagaimana parser mengenali dan membentuk struktur statement berdasarkan grammar. Setiap bentuk statement memiliki aturan sintaks dan struktur yang berbeda. Oleh karena itu, parser perlu mengenali INSERT ... SELECT sebagai salah satu bentuk statement INSERT yang valid, bukan hanya mendukung bentuk INSERT ... VALUES.
 
 
 **Perbaikan.** 
@@ -331,7 +333,7 @@ SELECT p.id, p.total
 FROM pesanan p
 WHERE p.tanggal < :batas;
 ```
-**Akar masalah.** Pada implementasi sebelumnya, fungsi _insert() di dalam resolver langsung melakukan iterasi terhadap ins.values tanpa memeriksa apakah atribut tersebut memiliki nilai.
+**Akar masalah.** Pada implementasi sebelumnya, fungsi _insert() di dalam resolver langsung melakukan iterasi terhadap ins.values tanpa memeriksa apakah atribut tersebut memiliki nilai. Konsep ini berkaitan dengan Bab 5 Representing Code, yang membahas representasi sintaks program dalam bentuk Abstract Syntax Tree (AST). Setiap jenis node AST dapat memiliki struktur dan atribut yang berbeda sesuai bentuk sintaksnya. Oleh karena itu, proses penelusuran AST harus memperhatikan atribut yang benar-benar tersedia pada node tersebut. Pada kasus ini, resolver perlu membedakan atribut values dan query karena keduanya merepresentasikan bentuk INSERT yang berbeda.
 
 Implementasi tersebut hanya dapat menangani INSERT yang menggunakan VALUES. Ketika menerima INSERT yang menggunakan SELECT, resolver tetap menjalankan proses iterasi terhadap atribut values yang bernilai None.
 
@@ -369,7 +371,7 @@ INSERT INTO arsip_pesanan (id, total)
 SELECT id, total
 FROM pesanan;
 ```
-**Akar masalah.** Pada implementasi sebelumnya, fungsi analyze_statement() di dalam crud/analyzer.py hanya menangani proses analisis INSERT menggunakan atribut stmt.values.
+**Akar masalah.** Pada implementasi sebelumnya, fungsi analyze_statement() di dalam crud/analyzer.py hanya menangani proses analisis INSERT menggunakan atribut stmt.values. Konsep ini berkaitan dengan Bab 5 Representing Code, khususnya pola Visitor untuk mengunjungi dan memproses node-node dalam AST. Setiap node memiliki struktur yang berbeda sehingga proses penelusuran harus disesuaikan dengan jenis node yang sedang diproses. Pada kasus ini, analyzer perlu menangani atribut values dan query secara terpisah agar kedua bentuk INSERT dapat dianalisis tanpa melakukan iterasi terhadap nilai None.
 
 Selain itu, implementasi sebelumnya menggunakan pemanggilan fungsi _collect_expr(), padahal fungsi tersebut tidak tersedia pada analyzer. Fungsi yang sudah digunakan untuk menelusuri ekspresi dan subquery adalah _collect().
 
@@ -412,7 +414,7 @@ WHERE id IN (
     WHERE total > 1000000
 );
 ```
-**Akar masalah.** Pada implementasi sebelumnya, fungsi analyze_statement() di dalam crud/analyzer.py meneruskan parameter operasi "U" ketika memanggil fungsi _collect() untuk menelusuri nilai assignment dan kondisi WHERE pada statement UPDATE.
+**Akar masalah.** Pada implementasi sebelumnya, fungsi analyze_statement() di dalam crud/analyzer.py meneruskan parameter operasi "U" ketika memanggil fungsi _collect() untuk menelusuri nilai assignment dan kondisi WHERE pada statement UPDATE. Konsep ini berkaitan dengan Bab 5 Representing Code, khususnya pola Visitor dalam proses penelusuran AST. Ketika mengunjungi node, proses analisis perlu memperhatikan jenis node dan konteks penggunaannya agar informasi yang diteruskan ke node berikutnya tidak keliru. Pada kasus ini, operasi UPDATE hanya berlaku untuk tabel tujuan, sedangkan tabel yang ditemukan melalui subquery harus dianalisis sebagai operasi READ. Dengan demikian, setiap bagian AST perlu diproses berdasarkan peran dan konteksnya.
 
 Sementara itu, fungsi _collect() bertugas menelusuri berbagai ekspresi, termasuk subquery yang terdapat di dalamnya. Ketika menemukan subquery, fungsi tersebut meneruskan parameter operasi yang diterima kepada fungsi _collect_select().
 
