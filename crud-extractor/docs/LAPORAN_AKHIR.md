@@ -42,13 +42,13 @@ lexing, parsing, atau resolusi).
     kesalahan regex: mendeteksi tabel pelanggan dengan operasi DELETE, padahal itu hanya berupa komentar
     mengapa parser benar: pada tahap lexing, lexer mengenali tanda -- sebagai komentar satu baris dan mengabaikan seluruh teks setelahnya hingga akhir baris. makanya, query sql ini tidak diproses lebih lanjut oleh parser 
     jenis kesalahan: False Positive (FP)
-2.  SQL: pelanggan p JOIN pesanan o ON o.pelanggan_id = p.id (laporan_penjualan.sql, 4 & 5)
+2.  SQL: pelanggan p JOIN pesanan o ON o.pelanggan_id = p.id (laporan_penjualan.sql, 3 - 5)
     kesalahan regex: regex melewatkan tabel pelanggan dan pesanan yang seharusnya dicatat sebagai opersi READ
     mengapa parser benar: parser mengenali struktur FROM dan JOIN sehingga kedua tabel dapat diidentifikasi sebagai sumber data dalam perintah SELECT 
     jenis kesalahan: False Negative (FN)
 3.  SQL: SELECT id nama, FROM pesanan; (campuran_error.sql, 4)
-    kesalahan regex: regex tetap mendeteksi tabel pesanan sebagai operasi READ padahal sintaksnya salah karena ada tanda koma sebelum klausa FROM. seharusnya koma diletakkan setelah id jika ingin select membaca dua kolom tabel pesanan.
-    mengapa parser benar: parser memeriksa kesesuaian susunan token dengan grammar SQL. tetapi karena statementnya tidak memenuhi aturan sintaks, jadi parser tidak memasukannya ke hasil ekstraksi CRUD. 
+    kesalahan regex: regex tetap mendeteksi tabel pesanan sebagai operasi READ meskipun statement memiliki kesalahan sintaks berupa tanda koma berlebih sebelum klausa FROM.
+    mengapa parser benar: parser memeriksa kesesuaian susunan token dengan grammar SQL. tetapi karena terdapat tanda koma setelah elemen terakhir pada daftar kolom, statement tidak memenuhi aturan sintaks sehingga tidak dimasukkan ke dalam hasil ekstraksi CRUD.
     jenis kesalahan: False Positive (FP)
 
 ## 3. Batas pendekatan kami
