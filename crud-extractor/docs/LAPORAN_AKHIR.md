@@ -43,9 +43,9 @@ lexing, parsing, atau resolusi).
     mengapa parser benar: pada tahap lexing, lexer mengenali tanda -- sebagai komentar satu baris dan mengabaikan seluruh teks setelahnya hingga akhir baris. makanya, query sql ini tidak diproses lebih lanjut oleh parser 
     jenis kesalahan: False Positive (FP)
 2.  SQL: pelanggan p JOIN pesanan o ON o.pelanggan_id = p.id (laporan_penjualan.sql, 3 - 5)
-    kesalahan regex: regex melewatkan tabel pelanggan dan pesanan yang seharusnya dicatat sebagai opersi READ
-    mengapa parser benar: parser mengenali struktur FROM dan JOIN sehingga kedua tabel dapat diidentifikasi sebagai sumber data dalam perintah SELECT 
-    jenis kesalahan: False Negative (FN)
+    kesalahan regex: regex sebenarnya berhasil mengenali tabel pelanggan dan pesanan, tetapi salah mencatat nomor barisnya menjadi baris 2, bukan baris 3. Hal ini terjadi karena pada baris 2 terdapat komentar -- DELETE FROM pelanggan yang membuat regex mengira statement sudah dimulai dari baris tersebut. Akibatnya, hasil deteksi tercatat sebagai False Positive pada baris 2 dan False Negative pada baris 3.
+    mengapa parser benar: parser memperoleh nomor baris berdasarkan posisi token yang dibaca oleh lexer dari teks SQL asli. Lexer mengabaikan komentar yang diawali --, tetapi tetap menghitung perpindahan baris saat membaca karakter berikutnya. Dengan demikian, komentar pada baris 2 tidak membuat nomor baris statement SELECT bergeser. Tabel pelanggan dan pesanan tetap tercatat pada baris 3 sesuai posisi sebenarnya. 
+    jenis kesalahan: False Positive (FP) dan False Negative (FN)
 3.  SQL: SELECT id nama, FROM pesanan; (campuran_error.sql, 4)
     kesalahan regex: regex tetap mendeteksi tabel pesanan sebagai operasi READ meskipun statement memiliki kesalahan sintaks berupa tanda koma berlebih sebelum klausa FROM.
     mengapa parser benar: parser memeriksa kesesuaian susunan token dengan grammar SQL. tetapi karena terdapat tanda koma setelah elemen terakhir pada daftar kolom, statement tidak memenuhi aturan sintaks sehingga tidak dimasukkan ke dalam hasil ekstraksi CRUD.
